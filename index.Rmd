@@ -1,0 +1,168 @@
+
+
+---
+title: "PSY6422 Data Management and Visualisation"
+author: "Flo Williams"
+date: '2022-05-06'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(here)
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(showtext)
+library(stringr)
+library(ggplot2)
+library(curl)
+```
+
+# Data Origins and Summary
+
+The raw data was taken from data.world at (https://data.world/crowdflower/time-magazine-covers). This is public domain data obtained by contributors classifying the gender of people who appeared on the cover of TIME Magazine between the years 1920-2013. It provides the number of female-fronted, male-fronted and total issues for each year. The prevalence of each gender is also given as a percentage of the total number of issues for each year.
+
+While the significance of who one specific magazine features may appear to be restricted, it indicates broader trends in female representation in the media. From intially looking over the raw data it is apparent that men continue to make up the majority of the covers, but we would anticipate the difference between male and female representation to close as we move away from the culture of 1920s America. My project aimed to question how much female representation has really advanced and examine the trends in TIME magazine covers across the years.
+
+It is only when visualising the data, with respect to total issues, that we truly see how female representation remains inadequate. 
+
+
+
+```{r import}
+#load data
+df <- read.csv(here("data", "TIME_Gender_Ratio.csv"))
+head(df)
+
+```
+
+# Data Preperation
+
+Firstly I made sure all columns were in a numeric format to allow me to plot them on the graph. After deciding I was going to plot the raw number for ease of understanding instead of issues instead of opting for a percentage I removed the redundant columns. I then created a new data frame in long format. 
+```{r wrangle}
+
+#remove % from Female.. and change name of column
+df$Female_per <- gsub("%", "", df$Female..)
+df$Male_per <- gsub("%", "", df$Male..)
+#change percentages from character to numeric
+
+df$Female_per <- as.numeric(as.character(df$Female_per))
+df$Male_per <- as.numeric(as.character(df$Male_per))
+
+#filter out original percentage column
+df <- df %>% 
+select(Year, Female, Male, Total)
+head(df)
+
+#gather to tranform into long format
+df_long <- gather(df, Condition, Number, -c(Year))
+
+head(df_long)
+
+```
+
+# Preparing the Data for Visualisation
+
+In order to prepare for the visualisation, I wanted to produce I changed the integer class, altered the level order to have a clearer legend and ensured a font I wanted was downloaded from google to ensure reproducibility.  
+
+```{r prepare}
+#change Number from interger to number
+df_long$Number <- as.numeric(as.character(df_long$Number))
+
+#change levels order and labels for presentation purposes
+df_long$Condition <- factor(df_long$Condition,
+                                  levels = c( "Total", "Male", "Female", 
+                                              labels(c("Total Issues", "Male Fronted Issues", 
+                                                       "Female Fronted Issues"))))
+#fontload
+font_add_google("Cinzel", "Cinzel", regular.wt = 400 )
+showtext_auto()
+?font_add_google
+
+```
+
+
+
+# Visualising the Data
+
+```{r warning=FALSE, message=FALSE}
+
+
+ #graph 1920 - 2013 
+p <- ggplot(df_long, aes(x=Year, y=Number, color=Condition))
+p +  geom_point( alpha=0.3) + geom_smooth(method = "gam") + 
+  labs(x = "Year", y = "Number of Issues Published", title = "TIME",
+       subtitle = "Trend of Male and Female personalities to be featured on the issues of TIME Magazine (1920-2013)", 
+       caption = "Source: data.world", col="TIME Magazine Issues")  +  
+  scale_colour_manual(values = c(Total ="#D62503",Male = "#20CFCF", Female="#9B3C90"), 
+                      labels= c("Total Issues", "Male-Fronted Issues", "Female-Fronted Issues"))+
+  
+  scale_x_continuous(name = "Year",limits = c(1923, 2020), breaks = seq(1920, 2020, 10)) +
+  scale_y_continuous(name = "Number of Issues Published",limits = c(NA,55), breaks = seq(0, 55, 10)) +
+  theme(
+    text = element_text(family = "serif", colour = "black"),
+    plot.title = element_text(family = "Cinzel", color  ="#D62503", size = 50, hjust = .5, vjust = 0.5), 
+    plot.subtitle = element_text(face= "bold", color  ="black"),
+    panel.border = element_rect(colour = "#D62503", fill = NA, size = 5), 
+    plot.background = element_rect(fill = "#FAFAFA"),
+    panel.background = element_rect(fill  = "#FAFAFA"),
+    panel.grid.minor  = element_line(colour = "grey"), 
+    panel.grid.major = element_line(colour = "grey"),
+    axis.text = element_text(colour = "black"),
+    legend.text = element_text(colour = "black"), 
+    legend.background = element_rect(fill = "#FAFAFA"),
+    legend.key = element_rect(fill = "#FAFAFA"),
+    legend.title = element_text(colour = "black"))
+
+```
+
+
+```{r warning=FALSE, message=FALSE}
+#ggplot of 1920-2000
+
+p <- ggplot(df_long, aes(x=Year, y=Number, color=Condition))
+p +  geom_point( alpha=0.3) + geom_smooth(method = "gam") + 
+  labs(x = "Year", y = "Number of Issues Published", title = "TIME",
+       subtitle = "Trend of Male and Female personalities to be featured on the issues of TIME Magazine (1920-2000)", 
+       caption = "Source: data.world", col="TIME Magazine Issues")  +  
+  scale_colour_manual(values = c(Total ="#D62503",Male = "#20CFCF", Female="#9B3C90"), 
+                      labels= c("Total Issues", "Male-Fronted Issues", "Female-Fronted Issues"))+
+  
+  scale_x_continuous(name = "Year",limits = c(1923, 2000), breaks = seq(1920, 2000, 10)) +
+  scale_y_continuous(name = "Number of Issues Published",limits = c(NA,55), breaks = seq(0, 55, 10)) +
+  theme(
+    text = element_text(family = "serif", colour = "black"),
+    plot.title = element_text(family = "Cinzel", color  ="#D62503", size = 50, hjust = .5, vjust = 0.5), 
+    plot.subtitle = element_text(face= "bold", color  ="black"),
+    panel.border = element_rect(colour = "#D62503", fill = NA, size = 5), 
+    plot.background = element_rect(fill = "#FAFAFA"),
+    panel.background = element_rect(fill  = "#FAFAFA"),
+    panel.grid.minor  = element_line(colour = "grey"), 
+    panel.grid.major = element_line(colour = "grey"),
+    axis.text = element_text(colour = "black"),
+    legend.text = element_text(colour = "black"), 
+    legend.background = element_rect(fill = "#FAFAFA"),
+    legend.key = element_rect(fill = "#FAFAFA"),
+    legend.title = element_text(colour = "black"))
+
+
+```
+
+# Rationale for the Chosen Visualtion 
+
+I first plotted the entire dataset (1920-2013), which shows more clearly the representation of men and women converging towards a more even split. However when the last 13years are not considered it becomes more obvious that trends in the representation of men have closely followed the total number of issues produced while female-fronted issues remain comparatively invariant. When these visualisations are shown together we can see how the overall trend towards fewer male-fronted issues is largely driven by the decrease in total issues as opposed to a more even representation of the genders.
+
+Personally, I feel that, while plotting the entire data set gives a more comprehensive review of the data, visualising 1920-2000 demonstrates how little progress has been made to increasing female representation on the cover of TIME magazine. As a result, I feel the second visualisation (1920-2000) more adequately conveys gender disparity in the media to a general audience. 
+
+# Summary 
+
+This project has taught me a lot about data presentation. Primarily, I've learned how little changes to the dataset, such as restricting the timeframe, may affect what a general audience takes away from the visualisation.  We frequently focus on broad patterns rather than segmenting when changes occur or what may be driving them.
+
+While I experimented with using a slider with the shiny package to control the timeframe of the visualisation I was not satisfied with what I was able to produce. If I were to recreate the project I would focus on creating an interactive output. 
+
+Hopefully, I can take away both the coding skills I have gained as well as a newfound understanding of how presentation can ease the understanding of data. For example, I hope that the inclusion of a similar font and colour scheme as TIME Magazine makes the subject matter instantly apparent and recognisable.
+
+
+# Save
+```{r message=FALSE, warning=FALSE}
+ggsave(here("plots", "mygraph.png"))
