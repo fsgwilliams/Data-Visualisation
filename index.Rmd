@@ -2,7 +2,7 @@
 
 ---
 title: "PSY6422 Data Management and Visualisation"
-author: "Flo Williams"
+author: 
 date: '2022-05-06'
 output: html_document
 ---
